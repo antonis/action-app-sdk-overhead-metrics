@@ -192,6 +192,23 @@ class StartupTimeTest : TestBase() {
         return appTimes
     }
 
+    private fun AndroidDriver.waitForAppReadyTimestamp(
+        logcatEntry: String,
+        sleepMs: Long = sleepTimeMs,
+        maxWaitLoops: Int = 50
+    ): Long {
+        printf("Waiting for log: %s", logcatEntry)
+        var counter = 0
+        while (manage().logs().get("logcat")
+                .none { it.message.contains(logcatEntry) } && counter <= maxWaitLoops
+        ) {
+            Thread.sleep(sleepMs)
+            counter++
+        }
+        return manage().logs().get("logcat")
+            .firstOrNull { it.message.contains(logcatEntry) }?.timestamp ?: 0L
+    }
+
     private fun collectAppStartupTime(
         driver: AppiumDriver,
         app: AppInfo,
@@ -202,6 +219,8 @@ class StartupTimeTest : TestBase() {
                 val androidDriver = (driver as AndroidDriver)
                 printf("%s", "${app.name} is installed: ${driver.isAppInstalled(app.name)}")
                 driver.terminateApp(app.name)
+
+                val startTimestamp = System.currentTimeMillis()
 
                 try {
                     val result = androidDriver.executeScript(
@@ -217,6 +236,20 @@ class StartupTimeTest : TestBase() {
                     val logs = driver.manage().logs().get("logcat").all.joinToString("\n")
                     printf("%s", logs)
                     throw (e)
+                }
+
+                if (app.appLoadedLog != null) {
+                    val timestamp = androidDriver.waitForAppReadyTimestamp(app.appLoadedLog)
+                    if (timestamp > 0) {
+                        printf(
+                            "A logcat entry '%s' was found in the logs with timestamp %d",
+                            app.appLoadedLog,
+                            timestamp
+                        )
+                        appTimes.add(timestamp - startTimestamp)
+                    } else {
+                        printf("A logcat entry '%s' was not found in the logs", app.appLoadedLog)
+                    }
                 }
 
                 val logEntries = driver.manage().logs().get("logcat")
