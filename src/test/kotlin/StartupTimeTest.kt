@@ -208,7 +208,7 @@ class StartupTimeTest : TestBase() {
                 try {
                     val result = androidDriver.executeScript(
                         "mobile: startActivity",
-                        ImmutableMap.of("intent", "${app.name}/.${app.activity!!}", "wait", true)
+                        ImmutableMap.of("intent", "${app.name}/.${app.activity!!}", "wait", false)
                     ).toString()
                     val error = Regex("Error: (.*)").find(result)?.groupValues
                     if (error != null) {
