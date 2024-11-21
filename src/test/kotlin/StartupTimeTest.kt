@@ -243,6 +243,10 @@ class StartupTimeTest : TestBase() {
                             regex.pattern,
                             times.size
                         )
+                        // in case the app can't be launched or crashes on startup, print logcat output
+                        val logs = driver.manage().logs().get("logcat").all.joinToString("\n")
+                        printf("%s", logs)
+                        throw Exception("No startup time found in logcat")
                     }
                 } else {
                     val regex =
