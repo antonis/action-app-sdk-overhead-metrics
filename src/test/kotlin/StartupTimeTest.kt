@@ -250,28 +250,29 @@ class StartupTimeTest : TestBase() {
                     } else {
                         printf("A logcat entry '%s' was not found in the logs", app.appLoadedLog)
                     }
-                }
-
-                val logEntries = driver.manage().logs().get("logcat")
-                val regex = Regex("Displayed ${app.name}/\\.${app.activity}: \\+(?:([0-9]+)s)?([0-9]+)ms")
-                val times = logEntries.mapNotNull {
-                    val groups = regex.find(it.message)?.groupValues
-                    if (groups == null) {
-                        null
-                    } else {
-                        printf("$logAppPrefix logcat entry processed: %s", app.name, it.message)
-                        val seconds = if (groups[1].isEmpty()) 0 else groups[1].toLong()
-                        seconds * 1000 + groups[2].toLong()
-                    }
-                }
-                if (times.size == 1) {
-                    appTimes.add(times.first())
                 } else {
-                    printf(
-                        "Expected 1 startup time in logcat, matching Regex '%s', but found %d",
-                        regex.pattern,
-                        times.size
-                    )
+                    val logEntries = driver.manage().logs().get("logcat")
+                    val regex =
+                        Regex("Displayed ${app.name}/\\.${app.activity}: \\+(?:([0-9]+)s)?([0-9]+)ms")
+                    val times = logEntries.mapNotNull {
+                        val groups = regex.find(it.message)?.groupValues
+                        if (groups == null) {
+                            null
+                        } else {
+                            printf("$logAppPrefix logcat entry processed: %s", app.name, it.message)
+                            val seconds = if (groups[1].isEmpty()) 0 else groups[1].toLong()
+                            seconds * 1000 + groups[2].toLong()
+                        }
+                    }
+                    if (times.size == 1) {
+                        appTimes.add(times.first())
+                    } else {
+                        printf(
+                            "Expected 1 startup time in logcat, matching Regex '%s', but found %d",
+                            regex.pattern,
+                            times.size
+                        )
+                    }
                 }
             }
 
