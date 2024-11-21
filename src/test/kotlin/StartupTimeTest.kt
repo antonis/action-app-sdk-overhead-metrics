@@ -208,7 +208,7 @@ class StartupTimeTest : TestBase() {
                 try {
                     val result = androidDriver.executeScript(
                         "mobile: startActivity",
-                        ImmutableMap.of("intent", "${app.name}/.${app.activity!!}", "wait", false)
+                        ImmutableMap.of("intent", "${app.name}/.${app.activity!!}", "wait", true)
                     ).toString()
                     val error = Regex("Error: (.*)").find(result)?.groupValues
                     if (error != null) {
@@ -265,6 +265,10 @@ class StartupTimeTest : TestBase() {
                             regex.pattern,
                             times.size
                         )
+                        // in case the app can't be launched or crashes on startup, print logcat output
+                        val logs = driver.manage().logs().get("logcat").all.joinToString("\n")
+                        printf("%s", logs)
+                        throw Exception("No startup time found in logcat")
                     }
                 }
             }
