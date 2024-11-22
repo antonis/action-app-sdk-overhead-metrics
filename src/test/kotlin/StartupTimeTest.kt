@@ -205,11 +205,12 @@ class StartupTimeTest : TestBase() {
                 val startTimestamp = System.currentTimeMillis()
 
                 try {
+                    requireNotNull(app.activity) { "Activity must be set for Android apps" }
                     val startActivityArgs = if (app.measureActivity != null) {
                         ImmutableMap.of(
                             "appPackage", app.name,
-                            "appActivity", app.activity!!,
-                            "intent", "android.intent.action.MAIN",
+                            "appActivity", app.activity,
+                            "intent", "${app.name}/.${app.activity}",
                             "appWaitActivity", app.measureActivity,
                             "wait", true
                         )
