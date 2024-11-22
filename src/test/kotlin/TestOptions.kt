@@ -110,10 +110,7 @@ data class TestOptions(
         logger.info("Launching Appium $platform driver with the following options: ${caps.asMap()}")
 
         return when (platform) {
-            Platform.Android -> {
-                caps.setCapability("appWaitActivity", "AppReadyActivity")
-                AndroidDriver(url, caps)
-            }
+            Platform.Android -> AndroidDriver(url, caps)
             Platform.IOS -> IOSDriver(url, caps)
         }
     }
