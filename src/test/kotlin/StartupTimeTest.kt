@@ -8,9 +8,6 @@ import io.kotest.matchers.doubles.shouldBeGreaterThan
 import io.kotest.matchers.doubles.shouldBeLessThan
 import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.Test
-import org.openqa.selenium.WebDriver
-import org.openqa.selenium.support.ui.FluentWait
-import java.time.Duration
 import kotlin.math.abs
 import kotlin.math.ceil
 
@@ -194,19 +191,6 @@ class StartupTimeTest : TestBase() {
         return appTimes
     }
 
-    private fun AndroidDriver.waitForActivity(
-        desiredActivity: String,
-        sleepMs: Long = sleepTimeMs,
-        timeOutMs: Long = 10_000,
-    ) {
-        printf("Waiting for activity: %s", desiredActivity)
-        val wait = FluentWait<WebDriver>(this)
-            .withTimeout(Duration.ofMillis(timeOutMs))
-            .pollingEvery(Duration.ofMillis(sleepMs))
-        wait.until { currentActivity()?.contains(desiredActivity) }
-        printf("Current activity: %s", currentActivity())
-    }
-
     private fun collectAppStartupTime(
         driver: AppiumDriver,
         app: AppInfo,
@@ -218,17 +202,28 @@ class StartupTimeTest : TestBase() {
                 printf("%s", "${app.name} is installed: ${driver.isAppInstalled(app.name)}")
                 driver.terminateApp(app.name)
 
+                val startTimestamp = System.currentTimeMillis()
+
                 try {
+                    val startActivityArgs = if (app.measureActivity != null) {
+                        ImmutableMap.of(
+                            "appPackage", app.name,
+                            "appActivity", app.activity!!,
+                            "intent", "android.intent.action.MAIN",
+                            "appWaitActivity", app.measureActivity,
+                            "wait", true
+                        )
+                    } else {
+                        ImmutableMap.of("intent", "${app.name}/.${app.activity!!}", "wait", true)
+                    }
+
                     val result = androidDriver.executeScript(
                         "mobile: startActivity",
-                        ImmutableMap.of("intent", "${app.name}/.${app.activity!!}", "wait", true)
+                        startActivityArgs
                     ).toString()
                     val error = Regex("Error: (.*)").find(result)?.groupValues
                     if (error != null) {
                         throw Exception(error[0])
-                    }
-                    app.measureActivity?.let {
-                        androidDriver.waitForActivity(it)
                     }
                 } catch (e: Exception) {
                     // in case the app can't be launched or crashes on startup, print logcat output
@@ -246,8 +241,12 @@ class StartupTimeTest : TestBase() {
                         null
                     } else {
                         printf("$logAppPrefix logcat entry processed: %s", app.name, it.message)
-                        val seconds = if (groups[1].isEmpty()) 0 else groups[1].toLong()
-                        seconds * 1000 + groups[2].toLong()
+                        if (app.measureActivity != null) {
+                            it.timestamp - startTimestamp
+                        } else {
+                            val seconds = if (groups[1].isEmpty()) 0 else groups[1].toLong()
+                            seconds * 1000 + groups[2].toLong()
+                        }
                     }
                 }
                 if (times.size == 1) {
