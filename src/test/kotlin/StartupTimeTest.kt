@@ -209,9 +209,9 @@ class StartupTimeTest : TestBase() {
                     val startActivityArgs = if (app.measureActivity != null) {
                         ImmutableMap.of(
                             "appPackage", app.name,
-                            "appActivity", app.activity,
+                            "appActivity", ".${app.activity}",
                             "intent", "${app.name}/.${app.activity}",
-                            "appWaitActivity", app.measureActivity,
+                            "appWaitActivity", ".${app.activity}",
                             "wait", true
                         )
                     } else {
