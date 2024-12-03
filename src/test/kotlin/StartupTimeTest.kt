@@ -258,6 +258,9 @@ class StartupTimeTest : TestBase() {
                         regex.pattern,
                         times.size
                     )
+                    val logs = driver.manage().logs().get("logcat").all.joinToString("\n")
+                    printf("%s", logs)
+                    throw Exception("Expected 1 startup time in logcat, but found $times")
                 }
             }
 
