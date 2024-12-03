@@ -211,11 +211,11 @@ class StartupTimeTest : TestBase() {
                             "appPackage", app.name,
                             "appActivity", ".${app.activity}",
                             "intent", "${app.name}/.${app.activity}",
-                            "appWaitActivity", ".${app.activity}",
+                            "appWaitActivity", ".${app.measureActivity}",
                             "wait", true
                         )
                     } else {
-                        ImmutableMap.of("intent", "${app.name}/.${app.activity!!}", "wait", true)
+                        ImmutableMap.of("intent", "${app.name}/.${app.activity}", "wait", true)
                     }
 
                     val result = androidDriver.executeScript(
